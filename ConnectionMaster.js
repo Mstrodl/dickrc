@@ -137,6 +137,11 @@ class Master extends EventEmitter {
       if (!this.members[guild.id]) this.members[guild.id] = {};
       this.members[guild.id][user.id] = true;
     }
+    console.log(
+      `populated user ${user.nick}(${user.id}) on guild ${guild.nick}(${
+        guild.id
+      })`
+    );
   }
 }
 

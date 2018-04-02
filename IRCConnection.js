@@ -7,30 +7,38 @@ class IRCConnection extends EventEmitter {
     super();
     this.user = user;
     this.master = master;
-    this.irc = new irc.Client(config.ircHost, this.user.nick, { debug: true });
+    this.irc = new irc.Client(config.ircHost, this.user.nick, {
+      debug: true,
+      nick: this.user.nick,
+      password: this.user.password,
+      sasl: true,
+      userName: this.user.nick
+    });
     this._connectListeners();
+    // setTimeout(() => {
+    //   this.irc.say("nickserv", `identify ${this.user.password}`, (err, res) => {
+    //     console.log("HI", err, res);
+    //   });
+    // }, 1000);
   }
 
   _connectListeners() {
     this.irc.addListener("names", async (channelNick, users) => {
       console.log("Owo!", channelNick, users);
       const guild = await this.master.guildByNick(channelNick);
+      if (!this.master.members[guild.id]) {
+        this.master.members[guild.id] = {};
+      }
       await Promise.all([
         Object.keys(users).map(async userNick => {
           const user = await this.master.getByNick(userNick);
-          if (
-            !this.master.members[guild.id] ||
-            !this.master.members[guild.id][user.id]
-          ) {
-            this.emit("userCreate", user, guild);
-          } else {
-            this.emit("userJoin", user, guild);
-          }
+          this.master.members[guild.id][user.id] = true;
         })
       ]);
     });
 
     this.irc.addListener("join", async (channelNick, userNick) => {
+      console.log("uwu");
       const user = await this.master.getByNick(userNick);
       const guild = await this.master.guildByNick(channelNick);
       if (
@@ -58,6 +66,13 @@ class IRCConnection extends EventEmitter {
       console.log("message.");
       this.emit("message", user, guild, message);
     });
+    this.irc.addListener("raw", message => {
+      console.log(message.command, message.args);
+      if (message.command == "307") {
+        this.irc.join("#bots", err => console.log(err));
+      }
+    });
+    this.irc.addListener("error", err => console.log(err));
   }
 
   async send(guild, content) {

@@ -1,7 +1,7 @@
-var express = require("express");
-var path = require("path");
-var logger = require("morgan");
-var bodyParser = require("body-parser");
+const express = require("express");
+const path = require("path");
+const logger = require("morgan");
+const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 
 mongoose.Promise = global.Promise;
@@ -11,7 +11,7 @@ const { Master } = require("./ConnectionMaster.js");
 const master = new Master();
 
 let cors = require("cors");
-var app = express();
+const app = express();
 app.use(
   cors({
     allowedHeaders: ["Authorization", "Content-Type"],
@@ -31,7 +31,7 @@ app.use("/api", shim);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
-  var err = new Error("Not Found");
+  const err = new Error("Not Found");
   err.status = 404;
   next(err);
 });
