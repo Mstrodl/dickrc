@@ -65,7 +65,9 @@ class IRCConnection extends EventEmitter {
       console.log(message.command, message.args);
       if (message.command == "307") {
         // Auth success message
-        this.irc.join(config.channels.join(" "), err => console.log(err));
+        for (const channel of config.channels) {
+          this.irc.join(channel, err => console.log(err));
+        }
       }
     });
     this.irc.addListener("error", err => console.log(err));
