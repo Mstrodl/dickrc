@@ -189,6 +189,7 @@ function renderEmbed(embed = {}) {
       (a, b) => b.name.length - a.name.length
     )[0].name.length;
     const longest = longestName > longestValue ? longestName : longestValue;
+    console.log("While the fields have a length!");
     while (fields.length) {
       // Oh god this is such shitcode.
       const field = fields.shift();
@@ -199,7 +200,7 @@ function renderEmbed(embed = {}) {
         outputs.push(addFields([field, field2], longest));
       } else {
         // If there's no inline fields in our group, we just add the one
-        outputs.push(addFields([field], table));
+        outputs.push(addFields([field], longest));
       }
     }
     a("\n" + outputs.join("\n"));
