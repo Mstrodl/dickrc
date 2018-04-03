@@ -32,6 +32,7 @@ for (const friendlyName in OPS) {
 class Master extends EventEmitter {
   constructor() {
     super();
+    this.messageCache = [];
     this.connections = {};
     this.wss = new WebSocket.Server({ port: config.wsport || 8000 });
     this.wss.on("connection", this._handleConnect.bind(this));
@@ -121,12 +122,29 @@ class Master extends EventEmitter {
         this.members[guild.id][user.id] = false;
       });
       this.connections[userId].on("message", async (user, guild, message) => {
+        if (
+          this.messageCache.some(dat => {
+            console.log([
+              user.id == dat.user,
+              guild.id == dat.guild,
+              message == dat.message,
+              this.users[userId].nick != dat.nick
+            ]);
+            return (
+              user.id == dat.user &&
+              guild.id == dat.guild &&
+              message == dat.message &&
+              this.users[userId].nick != dat.nick // Non-matching nick check because duped messages from the same user would be fine!
+            );
+          })
+        )
+          return console.log("Message in cache");
+        this._storeMessage(user, guild, message, this.users[userId].nick);
         this._populateUser(user, guild);
         this.emit(
           "message",
           await utils.createMessage({ user, guild, content: message })
         );
-        this._storeMessage(user, guild, message);
       });
       this.connections[userId].on("userLeave", (user, guild) => {
         this._populateUser(user, guild);
@@ -136,7 +154,19 @@ class Master extends EventEmitter {
     return this.connections[userId];
   }
 
-  async _storeMessage(user, guild, messageContent) {}
+  async _storeMessage(user, guild, messageContent, recievedBy) {
+    const dataObject = {
+      user: user.id,
+      guild: guild.id,
+      message: messageContent,
+      nick: recievedBy
+    };
+    this.messageCache.push(dataObject);
+    setTimeout(() => {
+      console.log("Popping message off cache", dataObject);
+      this.messageCache.splice(this.messageCache.indexOf(dataObject), 1);
+    }, 200);
+  }
 
   _populateUser(user, guild) {
     this.users[user.id] = user;
@@ -205,6 +235,7 @@ class ClientConnection extends EventEmitter {
       this._sendPresence(user, guild, "offline");
     });
     this.master.on("message", message => {
+      console.log("Master got a message, dispatching");
       this.dispatch("MESSAGE_CREATE", message);
     });
   }
