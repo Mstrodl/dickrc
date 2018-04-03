@@ -15,7 +15,9 @@ function setup(master) {
   router.get("/gateway", function(req, res) {
     return res.json({
       url: `ws${config.https ? "s" : ""}://${config.host ||
-        "localhost"}:${config.wsport || "8000"}`
+        "localhost"}:${config.wsDisplayPort ||
+        config.wsport ||
+        "8000"}${config.wsEndpoint || ""}`
     });
   });
 
