@@ -15,11 +15,6 @@ class IRCConnection extends EventEmitter {
       userName: this.user.nick
     });
     this._connectListeners();
-    // setTimeout(() => {
-    //   this.irc.say("nickserv", `identify ${this.user.password}`, (err, res) => {
-    //     console.log("HI", err, res);
-    //   });
-    // }, 1000);
   }
 
   _connectListeners() {
@@ -69,7 +64,8 @@ class IRCConnection extends EventEmitter {
     this.irc.addListener("raw", message => {
       console.log(message.command, message.args);
       if (message.command == "307") {
-        this.irc.join("#bots", err => console.log(err));
+        // Auth success message
+        this.irc.join(config.channels.join(" "), err => console.log(err));
       }
     });
     this.irc.addListener("error", err => console.log(err));
