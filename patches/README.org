@@ -1,0 +1,4 @@
+#+TITLE: Patches for support
+These are various patches to add support for dickrc in libraries.
+To add them, just run something like:
+~patch the_original_file.ext the_patch_file.patch~
