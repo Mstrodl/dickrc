@@ -177,7 +177,7 @@ function renderEmbed(embed = {}) {
     text += tx + "\n";
   }
   let text = "";
-  if (embed.title) a(embed.title + embed.url ? `" (${embed.url})` : "");
+  if (embed.title) a(embed.title + (embed.url ? `" (${embed.url})` : ""));
   a(embed.description);
   if (embed.fields && embed.fields.length) {
     const fields = embed.fields;
@@ -223,7 +223,7 @@ function renderEmbed(embed = {}) {
       }${embed.author.icon_url ? " " + embed.author.icon_url : ""}`
     );
   }
-  if (embed.footer.text) {
+  if (embed.footer && embed.footer.text) {
     a(
       embed.footer.text + embed.footer.icon_url
         ? " " + embed.footer.icon_url
