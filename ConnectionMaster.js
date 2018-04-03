@@ -1,4 +1,5 @@
 const EventEmitter = require("events");
+const url = require("url");
 const { User, Guild } = require("./schemas.js");
 const crypto = require("crypto");
 const IRCConnection = require("./IRCConnection.js");
@@ -119,8 +120,13 @@ class Master extends EventEmitter {
         this._populateUser(user, guild);
         this.members[guild.id][user.id] = false;
       });
-      this.connections[userId].on("message", (user, guild) => {
+      this.connections[userId].on("message", async (user, guild, message) => {
         this._populateUser(user, guild);
+        this.emit(
+          "message",
+          await utils.createMessage({ user, guild, content: message })
+        );
+        this._storeMessage(user, guild, message);
       });
       this.connections[userId].on("userLeave", (user, guild) => {
         this._populateUser(user, guild);
@@ -129,6 +135,8 @@ class Master extends EventEmitter {
     }
     return this.connections[userId];
   }
+
+  async _storeMessage(user, guild, messageContent) {}
 
   _populateUser(user, guild) {
     this.users[user.id] = user;
@@ -150,6 +158,7 @@ class ClientConnection extends EventEmitter {
     super();
     this.master = master;
     this.ws = ws;
+    this.pack = false; // url.parse(this.ws.upgradeReq.url, true).query.encoding == "etf";
     this._hello();
     this.heartbeatInterval = 45000;
     this.ws.on("message", this._onMessage.bind(this));
@@ -195,12 +204,8 @@ class ClientConnection extends EventEmitter {
     connection.on("userPart", (user, guild) => {
       this._sendPresence(user, guild, "offline");
     });
-    connection.on("message", async (user, guild, content) => {
-      console.log("message..?", guild.id);
-      this.dispatch(
-        "MESSAGE_CREATE",
-        await this._newMessage({ content, user, guild })
-      );
+    this.master.on("message", message => {
+      this.dispatch("MESSAGE_CREATE", message);
     });
   }
 
@@ -372,21 +377,9 @@ class ClientConnection extends EventEmitter {
         theme: "dark",
         timezone_offset: 420
       },
-      analytics_token: "penis",
+      analytics_token: "owo",
       _trace: ["fuck"]
     });
-    // return this.dispatch("READY", {
-    //   v: 6,
-    //   user: this.user.toJSON(),
-    //   guilds: [
-    //     // this._jsonGuild({
-    //     //   id: "42042042042042069",
-    //     //   nick: "test"
-    //     // })
-    //   ],
-    //   session_id: this._createSessionId(),
-    //   _trace: ["eyers"]
-    // });
   }
 
   _createSessionId() {
@@ -425,7 +418,7 @@ class ClientConnection extends EventEmitter {
     };
     const packet = JSON.stringify(response);
     console.log(`-> ${packet}`);
-    return this.ws.send(packet);
+    return this.ws.send(this.pack ? erlpack.pack(packet) : packet);
   }
 }
 

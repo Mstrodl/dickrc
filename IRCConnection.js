@@ -74,7 +74,15 @@ class IRCConnection extends EventEmitter {
   }
 
   async send(guild, content) {
-    this.irc.say(guild.nick, content);
+    console.log("Sending...", content);
+    if (!content) return console.log("I was duped into sending", content);
+    this.irc.say(
+      guild.nick,
+      content
+        .split("\n")
+        .filter(r => r)
+        .join("\n")
+    );
   }
 }
 

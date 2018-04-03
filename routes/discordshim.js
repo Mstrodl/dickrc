@@ -62,7 +62,10 @@ function setup(master) {
       } catch (err) {
         throw new utils.UnknownChannel();
       }
-      await connection.send(guild, req.body.content + "(edited)");
+      await connection.send(
+        guild,
+        utils.parseMarkdown(req.body.content) + "(edited)"
+      );
       res.json(
         await utils.createMessage({
           content: req.body.content,
@@ -96,7 +99,7 @@ function setup(master) {
     "/channels/:channel_id/messages",
     authenticateUser,
     async function(req, res) {
-      console.log(req.user);
+      console.log(req.user, req.body);
       const connection = await master.getConnection(req.user.id);
       // TODO: support multipart & embeds
       console.log("got a connection, and authed");
@@ -106,8 +109,15 @@ function setup(master) {
         throw new utils.UnknownChannel();
       }
       console.log("sending...");
-      console.log(connection);
-      await connection.send(guild, req.body.content);
+      if (req.body.content)
+        await connection.send(guild, utils.parseMarkdown(req.body.content));
+      if (req.body.embed) {
+        console.log("We need to render", req.body.embed);
+        const embed = utils.renderEmbed(req.body.embed);
+        console.log(embed);
+        await connection.send(guild, embed);
+        console.log("DOne!");
+      }
       console.log("FUCK");
       res.json(
         await utils.createMessage({
@@ -120,6 +130,9 @@ function setup(master) {
   );
 
   async function authenticateUser(req, res, next) {
+    if (!req.headers.authorization) {
+      throw new utils.InvalidToken("No token was specified");
+    }
     req.user = await utils.findToken(
       req.headers.authorization.split(" ").pop()
     );
